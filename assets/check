@@ -50,11 +50,10 @@ if [ -n "$paramRegex" ]; then
 fi
 
 final_url=$(echo "$args_security" " $args_url")
-# echo $final_url
 
 if [ -z "$version" ]; then
   echo "empty version - return current version"
-  artifactory_current_version "$final_url" "$regex" >&3
+  artifactory_current_version "$final_url" >&3
 else
-  check_version "$final_url" "$regex" "$version" >&3
+  check_version "$final_url" "$version" >&3
 fi

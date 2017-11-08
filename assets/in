@@ -74,9 +74,7 @@ if [ -z "$file" ]; then
   exit 1
 fi
 
-args_url="$endpoint$repository/$file"
-
-# echo $args_security "-O" "$args_url"
+args_url="$endpoint$repository/$version/$file"
 curl $args_security "-O" "$args_url"
 
 echo $file_json | jq '.[].version | {version: {version: .}}' >&3

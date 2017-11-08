@@ -10,24 +10,19 @@ applyRegex_version() {
 
 }
 
-# retrieve current from artifactory
-# e.g url=http://your-host-goes-here:8081/artifactory/api/storage/your-path-goes-here
-#     regex=ecd-front-(?<version>.*).tar.gz
+# retrieve latest version from artifactory
+# e.g url=http://your-host-goes-here:8081/artifactory/api/storage/com/acme/module/
 artifactory_current_version() {
   local artifacts_url=$1
-  local regex=$2
 
-  curl $1 | jq --arg v "$regex" '[.children[].uri | capture($v)]' | jq 'sort_by(.version)' | jq '[.[length-1] | {version: .version}]'
-
+  curl $1 | jq  '[.children[].uri | ltrimstr("/")]' | jq 'sort' | jq '[.[length-1]| {version: .}]'
 }
 
 # Return all versions
 artifactory_versions() {
   local artifacts_url=$1
-  local regex=$2
 
-  curl $1 | jq --arg v "$regex" '[.children[].uri | capture($v)]' | jq 'sort_by(.version)' | jq '[.[] | {version: .version}]'
-
+  curl $1 | jq  '[.children[].uri | ltrimstr("/")]' | jq 'sort' | jq '[.[] | {version: .}]'
 }
 
 # return uri and version of all files
@@ -36,27 +31,23 @@ artifactory_files() {
   local regex="(?<uri>$2)"
 
   curl $1 | jq --arg v "$regex" '[.children[].uri | capture($v)]' | jq 'sort_by(.version)' | jq '[.[] | {uri: .uri, version: .version}]'
-
 }
 
 in_file_with_version() {
-  local artifacts_url=$1
+  local artifacts_url="$1/$3"
   local regex="(?<uri>$2)"
   local version=$3
 
-  result=$(artifactory_files "$artifacts_url" "$regex")
-  echo $result | jq --arg v "$version" '[foreach .[] as $item ([]; $item ; if $item.version == $v then $item else empty end)]'
-
+  result=$(curl $artifacts_url | jq --arg v "$regex" '[.children[].uri| capture($v) ]'| jq '[.[] | {uri: .uri, version: .version}]')
+  echo $result
 }
 
 
 # return the list of versions from provided version
 check_version() {
   local artifacts_url=$1
-  local regex=$2
-  local version=$3
+  local version=$2
 
-  result=$(artifactory_versions "$artifacts_url" "$regex")  #result=$(curl "$artifacts_url" "$regex")
+  result=$(artifactory_versions "$artifacts_url")
   echo $result | jq --arg v "$version" '[foreach .[] as $item ([]; $item ; if $item.version >= $v then $item else empty end)]'
-
 }
