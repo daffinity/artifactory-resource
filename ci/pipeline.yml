@@ -1,0 +1,37 @@
+---
+platform: linux
+
+# Build and publish a Docker image for every commit to a release branch tagged with v*.
+
+resources:
+
+  - name: artifactory-resource-source
+    type: git
+    source:
+      uri: {{artifactory-resource-git-uri}}
+      branch: {{artifactory-resource-git-branch}}
+      username: {{git-username}}
+      password: {{git-password}}
+      tag_filter: v*
+
+  - name: artifactory-resource-image
+    type: docker-image
+    source:
+      repository: {{docker-repository}}
+      username: {{docker-username}}
+      password: {{docker-password}}
+
+jobs:
+
+  - name: build
+    plan:
+      - aggregate:
+        - get: project
+          resource: artifactory-resource-source
+          trigger: true
+      - put: artifactory-resource-image
+        params:
+          build: project
+          tag: artifactory-resource-source/.git/ref
+          tag_as_latest: true
+
