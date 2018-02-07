@@ -73,19 +73,6 @@ trueValue="true"
 # echo "########## $filename, $file"
 
 if [ "$disable_redeploy" = "true" ]; then
-
-endpoint=$(jq -r '.source.endpoint // ""' < $payload)
-regex=$(jq -r '.source.regex // ""' < $payload)
-username=$(jq -r '.source.username // ""' < $payload)
-password=$(jq -r '.source.password // ""' < $payload)
-skip_ssl_verification=$(jq -r '.source.skip_ssl_verification // ""' < $payload)
-
-repository=$(jq -r '.source.repository // ""' < $payload)
-file=$(jq -r '.params.file // ""' < $payload)
-folder=$(jq -r '.params.folder // ""' < $payload)
-paramRegex=$(jq -r '.params.regex // ""' < $payload)
-
-version=$(jq -r '.version.version // ""' < $payload)
   foundVersions=$(jq -n \
   --arg endpoint "$endpoint" \
   --arg regex "$regex" \
