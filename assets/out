@@ -5,7 +5,9 @@ set -e
 exec 3>&1 # make stdout available as fd 3 for the result
 exec 1>&2 # redirect all output to stderr for logging
 
-source $(dirname $0)/common.sh
+resource_dir=$(dirname $0)
+
+source $resource_dir/common.sh
 
 source=$1
 
@@ -25,6 +27,7 @@ regex=$(jq -r '.source.regex // ""' < $payload)
 username=$(jq -r '.source.username // ""' < $payload)
 password=$(jq -r '.source.password // ""' < $payload)
 skip_ssl_verification=$(jq -r '.source.skip_ssl_verification // ""' < $payload)
+disable_redeploy=$(jq -r '.source.disable_redeploy // ""' < $payload)
 
 repository=$(jq -r '.source.repository // ""' < $payload)
 folder=$(jq -r '.params.folder // ""' < $payload)
@@ -51,7 +54,7 @@ filename=$(basename "$abs_file")
 # echo $file $regex
 version=$(applyRegex_version $regex $filename)
 
-# artifactory/maven repo layout 
+# artifactory/maven repo layout
 # [org]/[module]/[baseRev](-[folderItegRev])/[module]-[baseRev](-[fileItegRev])(-[classifier]).[ext]
 # org = $repository, i.e. "com/acme"
 # module = $folder
@@ -77,9 +80,63 @@ trueValue="true"
 
 # echo "########## $filename, $file"
 
-#echo $args_security "-T $abs_file $args_url "
+if [ "$disable_redeploy" = "true" ]; then
+
+endpoint=$(jq -r '.source.endpoint // ""' < $payload)
+regex=$(jq -r '.source.regex // ""' < $payload)
+username=$(jq -r '.source.username // ""' < $payload)
+password=$(jq -r '.source.password // ""' < $payload)
+skip_ssl_verification=$(jq -r '.source.skip_ssl_verification // ""' < $payload)
+
+repository=$(jq -r '.source.repository // ""' < $payload)
+file=$(jq -r '.params.file // ""' < $payload)
+folder=$(jq -r '.params.folder // ""' < $payload)
+paramRegex=$(jq -r '.params.regex // ""' < $payload)
+
+version=$(jq -r '.version.version // ""' < $payload)
+  foundVersions=$(jq -n \
+  --arg endpoint "$endpoint" \
+  --arg regex "$regex" \
+  --arg username "$username" \
+  --arg password "$password" \
+  --arg skip_ssl_verification "$skip_ssl_verification" \
+  --arg repository "$repository" \
+  --arg file "$file" \
+  --arg folder "$folder" \
+  --arg paramRegex "$paramRegex" \
+  --arg version "$version" \
+  '{
+    version: {
+      version: $version
+    },
+    source: {
+      endpoint: $endpoint,
+      regex: $regex,
+      username: $username,
+      password: $password,
+      skip_ssl_verification: $skip_ssl_verification,
+      repository: $repository
+    },
+    params: {
+      file: $file,
+      folder: $folder,
+      regex: $paramRegex
+    }
+  }' | $resource_dir/check "$source" | jq -r '.[].version')
+
+  for foundVersion in $foundVersions; do
+    if [ "$version" = "$foundVersion" ]; then
+      echo "Skipping deploy because disable_redeploy is enabled and a file matching version of $version is already deployed."
+      jq -n --arg version "$version" '{ version: {version: $version} }' >&3
+      exit 0
+    fi
+  done
+fi
+
+# echo $args_security "-T $abs_file $args_url "
 curl $args_security "-T$abs_file" "$args_url"
 
 jq -n "{
   version: {version: $(echo $version | jq -R .)}
 }" >&3
+

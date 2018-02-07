@@ -31,6 +31,7 @@ resources:
 * `username`: *Optional.* Username for HTTP(S) auth when accessing an authenticated repository
 * `password`: *Optional.* Password for HTTP(S) auth when accessing an authenticated repository
 * `skip_ssl_verification`: *Optional.* Skip ssl verification when connecting to Artifactory's APIs. Values: ```true``` or ```false```(default).
+* `disable_redeploy`: *Optional.* Do not attempt deployment if a matching file version is currently already deployed. This allows jobs to be re-run even if Artifactory is configured to disallow overwriting existing artifacts.
 
 ## Parameter Configuration
 

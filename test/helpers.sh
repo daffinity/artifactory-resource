@@ -238,3 +238,30 @@ deploy_with_credentials() {
 EOF
 }
 
+# OUT
+deploy_without_credentials_and_skip_redeploy() {
+
+  local endpoint=$1
+  local regex=$2
+  local repository=$3
+  local file=$(create_file "$6" "$4")
+  local version=$5
+  local src=$6
+  local skip_redeploy=$7
+
+  local version_file=$(create_version_file "$version" "$src")
+
+  jq -n "{
+    params: {
+      file: $(echo $file | jq -R .),
+      version_file: $(echo $version_file | jq -R .)
+    },
+    source: {
+      endpoint: $(echo $endpoint | jq -R .),
+      repository: $(echo $repository | jq -R .),
+      regex: $(echo $regex | jq -R .),
+      skip_redeploy: $(echo $skip_redeploy | jq -R .)
+    }
+  }" | $resource_dir/out "$src" | tee /dev/stderr
+}
+
