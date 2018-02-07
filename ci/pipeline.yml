@@ -32,6 +32,6 @@ jobs:
       - put: artifactory-resource-image
         params:
           build: project
-          tag: artifactory-resource-source/.git/ref
+          tag: project/.git/ref
           tag_as_latest: true
 
