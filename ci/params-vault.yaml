@@ -1,0 +1,10 @@
+
+artifactory-resource-git-uri: ((secrets_git.uri-prefix))/artifactory-resource
+artifactory-resource-git-branch: master
+
+git-username: ((secrets_git.username))
+git-password: ((secrets_git.password))
+
+docker-username: ((secrets_gcr.username))
+docker-password: ((secrets_gcr.password))
+docker-repository: ((secrets_gcr.repository-prefix))/artifactory-resource
